@@ -14,14 +14,20 @@ app.get('/', (req, res) => {
         Value: 42
     });
 
+    //get the keys
+
+    const keys = helper.createPrivateKey();
+
+    console.log(keys);
+
     //get the transaction header
-    const transactionHeader = helper.createTransactionHeader(payload);
+    const transactionHeader = helper.createTransactionHeader(payload,keys);
 
     //create transaction
     const transaction = helper.createTransaction(transactionHeader, payload);
 
     //create batchheader
-    const batchheader = helper.createBatchHeader(transaction);
+    const batchheader = helper.createBatchHeader(transaction,keys);
 
     //create batch 
     const batch = helper.createBatch(batchheader, transaction);
@@ -36,8 +42,9 @@ app.get('/', (req, res) => {
         body: batchListBytes,
         headers: { 'Content-Type': 'application/octet-stream' }
     }, (err, response) => {
-        if (err) return console.log(err)
-        console.log(response.body)
+        
+        console.log("Error",err);
+        console.log("response",response.body)
     })
 
     res.send('ok');
@@ -52,6 +59,6 @@ app.get('/generate-key', (req, res) => {
 
 
 
-app.listen(3000, function () {
+app.listen(3001, function () {
     console.log('ok');
 });

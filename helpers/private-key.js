@@ -16,13 +16,12 @@ const { protobuf } = require('sawtooth-sdk')
 */
 const createPrivateKey = function createPrivateKey() {
 
-    const output = `PRIVATE_KEY=${privateKey.asHex()}\nPUBLIC_KEY=${signer.getPublicKey().asHex()}`
+    //const output = `PRIVATE_KEY=${privateKey.asHex()}\nPUBLIC_KEY=${signer.getPublicKey().asHex()}`
 
-    fs.writeFile(path.resolve(__dirname, './.env'), output, (err) => {
-        if (err) {
-            return console.log(err)
-        }
-    })
+    return {
+        privateKey:privateKey.asHex(),
+        publicKey:signer.getPublicKey().asHex()
+    }
 }
 
 /*
@@ -37,16 +36,15 @@ const encodePayload = function encodePayload(payload) {
 /*
 *Create the transaction header
 */
-const createTransactionHeader = function createTransactionHeader(payloadBytes) {
+const createTransactionHeader = function createTransactionHeader(payloadBytes,keys) {
 
     return  protobuf.TransactionHeader.encode({
         familyName: 'intkey',
         familyVersion: '1.0',
         inputs: [],
         outputs: [],
-        signerPublicKey: '02cb65a26f7af4286d5f8118400262f7790e20018f2d01e1a9ffc25de1aafabdda',
-
-        batcherPublicKey: '02cb65a26f7af4286d5f8118400262f7790e20018f2d01e1a9ffc25de1aafabdda',
+        signerPublicKey: keys.publicKey,
+        batcherPublicKey:  keys.publicKey,
         dependencies: [],
         payloadSha512: createHash('sha512').update(payloadBytes).digest('hex')
     }).finish();
@@ -59,10 +57,8 @@ const createTransactionHeader = function createTransactionHeader(payloadBytes) {
 */
 const createTransaction = function createTransaction(transactionHeaderBytes, payloadBytes) {
 
-    const signature = signer.sign(transactionHeaderBytes)
-
-    console.log(signature);
-
+    const signature = signer.sign(transactionHeaderBytes);
+    
     return transaction = protobuf.Transaction.create({
         header: transactionHeaderBytes,
         headerSignature:signature,
@@ -72,12 +68,12 @@ const createTransaction = function createTransaction(transactionHeaderBytes, pay
 /*
 * Create batch heaader
 */
-const createBatchHeader = function createBatchHeader(transaction) {
+const createBatchHeader = function createBatchHeader(transaction,keys) {
 
     const transactions = [transaction];
 
    return protobuf.BatchHeader.encode({
-        signerPublicKey: '02cb65a26f7af4286d5f8118400262f7790e20018f2d01e1a9ffc25de1aafabdda',
+        signerPublicKey:keys.publicKey,
         transactionIds: transactions.map((txn) => txn.headerSignature),
     }).finish();
 
